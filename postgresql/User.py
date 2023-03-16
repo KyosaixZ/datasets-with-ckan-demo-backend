@@ -21,7 +21,7 @@ class User(PostgreSQL):
 	state: str
 	image: str
 	last_active: str
-	secret: os.getenv('SECRET')
+	secret:str =  os.getenv('SECRET')
 
 	def __init__(self, api_key:str = None):
 		super().__init__()
@@ -34,7 +34,10 @@ class User(PostgreSQL):
 		
 	def _verify_token(self, token:str = None):
 		# if success set the user id
-		
+		if jwt.decode(token, self.secret, algorithms=["HS256"]):
+			return True
+		else:
+			return False
 
 	def login(self, name, password):
 		with self.engine.connect() as connection:
@@ -51,6 +54,7 @@ class User(PostgreSQL):
 				self.id = result[0]
 				self.name = result[1]
 				# generate a jwt token or something
+				token = jwt.encode({"id": self.id}, self.secret, algorithm="HS256")
 				# then, return token to user
 				return token
 			else:
@@ -60,14 +64,11 @@ class User(PostgreSQL):
 		if self._verify_token(token):
 			# if verify success
 			with self.engine.connect() as connection:
-				query_string = "SELECT id, name, apikey, created, about, password, fullname, email, sysadmin, activity_streams_email_notifications, stat, image_url, last_active FROM public.user WHERE id = '%s'" % self.id
+				query_string = "SELECT id, name, apikey, created, about, password, fullname, email, sysadmin, activity_streams_email_notifications, state, image_url, last_active FROM public.user WHERE id = '%s'" % self.id
 				# query the user details
-				result = connection.execute(text(query_string))
+				result = connection.execute(text(query_string)).one()
 				if result is not None:
 					return result
-
-taworn = User()
-print(taworn.login('taworn', 'test1235'))
 '''
 for row in result:
 	if row['name'] == name and self._verify_password(password, row['password']):

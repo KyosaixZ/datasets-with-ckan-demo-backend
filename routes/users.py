@@ -1,5 +1,10 @@
+import sys, os
 from flask import Blueprint, request
 from ckan.ckan_connect import ckan_connect
+
+sys.path.append(r'D:\CKAN-final\datasets-with-ckan-demo-backend\postgresql')
+
+from User import User
 
 users_route = Blueprint('users_route', __name__)
 
@@ -32,3 +37,12 @@ def delete_user(users_id):
 	with ckan_connect() as ckan:
 		ckan.action.user_delete(id=users_id)
 		return {'ok': True, 'message': 'success'}
+
+# login
+@users_route.route('/login', methods=['POST'])
+def login():
+	print('a')
+	payload = request.json
+	user = User()
+	token = user.login(payload['name'], payload['password'])
+	return {'ok': True,'message': 'success', 'token': token}
