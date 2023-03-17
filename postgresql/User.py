@@ -6,7 +6,7 @@ import jwt
 # load env file
 load_dotenv()
 
-from core.PostgreSQL import PostgreSQL
+from .core.PostgreSQL import PostgreSQL
 
 class User(PostgreSQL):
 	id: str
@@ -35,9 +35,13 @@ class User(PostgreSQL):
 	def _verify_token(self, token:str = None):
 		# if success set the user id
 		if jwt.decode(token, self.secret, algorithms=["HS256"]):
+			self.id = jwt.decode(token, self.secret, algorithms=["HS256"])['id']
 			return True
 		else:
 			return False
+		
+	def _decrypt_token(self, token:str = None):
+		return jwt.decode(token, self.secret, algorithms=["HS256"])
 
 	def login(self, name, password):
 		with self.engine.connect() as connection:
@@ -63,12 +67,24 @@ class User(PostgreSQL):
 	def get_user_details(self, token):
 		if self._verify_token(token):
 			# if verify success
+			# decrypt token
+			# token = self._decrypt_token(token)
 			with self.engine.connect() as connection:
 				query_string = "SELECT id, name, apikey, created, about, password, fullname, email, sysadmin, activity_streams_email_notifications, state, image_url, last_active FROM public.user WHERE id = '%s'" % self.id
 				# query the user details
 				result = connection.execute(text(query_string)).one()
 				if result is not None:
-					return result
+					result_as_dict = {
+						'id': result[0],
+						'name': result[1],
+						'apikey': result[2],
+						'created': result[3],
+						'about': result[4],
+						'fullname': result[6],
+						'email': result[7],
+						'image_url': result[11]
+					}
+					return result_as_dict
 '''
 for row in result:
 	if row['name'] == name and self._verify_password(password, row['password']):

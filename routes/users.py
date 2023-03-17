@@ -1,10 +1,7 @@
 import sys, os
 from flask import Blueprint, request
 from ckan.ckan_connect import ckan_connect
-
-sys.path.append(r'D:\CKAN-final\datasets-with-ckan-demo-backend\postgresql')
-
-from User import User
+from postgresql.User import User
 
 users_route = Blueprint('users_route', __name__)
 
@@ -41,8 +38,30 @@ def delete_user(users_id):
 # login
 @users_route.route('/login', methods=['POST'])
 def login():
-	print('a')
 	payload = request.json
 	user = User()
 	token = user.login(payload['name'], payload['password'])
 	return {'ok': True,'message': 'success', 'token': token}
+
+# get user details
+@users_route.route('/me', methods=['GET'])
+def get_personal_details():
+	token = request.headers.get('Authorization')
+	user = User()
+	details = user.get_user_details(token)
+	if details is not None:
+		return {'ok': True, 'message': 'success', 'details': details}
+	else:
+		return 'error'
+
+# get a user details (using a ckanapi)
+@users_route.route('/<user_name>', methods=['GET'])
+def get_user_details(user_name):
+	with ckan_connect() as ckan:
+		return ckan.action.user_show(id=user_name, include_datasets=True, include_num_followers=True)
+
+# get a package that user collab
+@users_route.route('/packages/<user_name>', methods=['GET'])
+def get_user_packages(user_name):
+	with ckan_connect() as ckan:
+		return ckan.action.package_collaborator_list_for_user(id=user_name)
