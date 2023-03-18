@@ -20,6 +20,11 @@ def create_users():
 	payload = request.json
 	with ckan_connect() as ckan:
 		user = ckan.action.user_create(**payload)
+		# if user was created, now create their apy token
+		if user:
+			token_payload = {'name': 'ckan_private_api_token', 'user': payload['name']}
+			ckan.action.api_token_create(**token_payload)
+
 		return {'ok': True, 'message': 'success', 'user': user}
 
 # delete users

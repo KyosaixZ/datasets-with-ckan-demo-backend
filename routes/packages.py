@@ -1,5 +1,6 @@
 from flask import Blueprint, request
 from ckan.ckan_connect import ckan_connect
+from postgresql.User import User
 
 packages_route = Blueprint('packages_route', __name__)
 
@@ -30,3 +31,12 @@ def get_packages():
 					'private': package['private']
 				})
 		return result
+	
+# create package
+@packages_route.route('/', methods=['POST'])
+def create_packages():
+	token = request.headers.get('Authorization')
+	payload = request.json
+	user = User(jwt_token=token)
+	with ckan_connect(api_key=user.api_token) as ckan:
+		return ckan.action.package_create(**payload)

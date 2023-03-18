@@ -12,6 +12,7 @@ class User(PostgreSQL):
 	id: str
 	name: str
 	api_key: str
+	api_token: str
 	create: str
 	about: str
 	password: str
@@ -22,9 +23,12 @@ class User(PostgreSQL):
 	image: str
 	last_active: str
 	secret:str =  os.getenv('SECRET')
+	token_secret:str = os.getenv('TOKEN_SECRET')
 
-	def __init__(self, api_key:str = None):
+	def __init__(self, jwt_token: str = None):
 		super().__init__()
+		if jwt_token is not None:
+			self._verify_token(jwt_token)		
 
 	def _verify_password(self, password, pasword_hashed):
 		if pbkdf2_sha512.verify(password, pasword_hashed):
@@ -36,12 +40,22 @@ class User(PostgreSQL):
 		# if success set the user id
 		if jwt.decode(token, self.secret, algorithms=["HS256"]):
 			self.id = jwt.decode(token, self.secret, algorithms=["HS256"])['id']
+			# get a api_token from database
+			self._get_api_token()
 			return True
 		else:
 			return False
-		
-	def _decrypt_token(self, token:str = None):
-		return jwt.decode(token, self.secret, algorithms=["HS256"])
+
+	def _get_api_token(self):
+		with self.engine.connect() as connection:
+			query_string = "SELECT id, name FROM public.api_token WHERE user_id = '%s' AND name='%s'" % (self.id, 'ckan_private_api_token')
+			try:
+				result = connection.execute(text(query_string)).one()
+				token = jwt.encode({"jti": result[0], "iat": 1679160636}, self.token_secret, algorithm="HS256")
+				self.api_token = token
+				return token				
+			except:
+				return False
 
 	def login(self, name, password):
 		with self.engine.connect() as connection:
@@ -58,17 +72,14 @@ class User(PostgreSQL):
 				self.id = result[0]
 				self.name = result[1]
 				# generate a jwt token or something
-				token = jwt.encode({"id": self.id}, self.secret, algorithm="HS256")
-				# then, return token to user
+				token = jwt.encode({"id": self.id, "name": self.name}, self.secret, algorithm="HS256")
+				# then, return token to client
 				return token
 			else:
 				return False
 
 	def get_user_details(self, token):
 		if self._verify_token(token):
-			# if verify success
-			# decrypt token
-			# token = self._decrypt_token(token)
 			with self.engine.connect() as connection:
 				query_string = "SELECT id, name, apikey, created, about, password, fullname, email, sysadmin, activity_streams_email_notifications, state, image_url, last_active FROM public.user WHERE id = '%s'" % self.id
 				# query the user details
@@ -85,11 +96,3 @@ class User(PostgreSQL):
 						'image_url': result[11]
 					}
 					return result_as_dict
-'''
-for row in result:
-	if row['name'] == name and self._verify_password(password, row['password']):
-		self.name = row['name']
-		self.password = row['password']
-		return True
-return False
-'''
