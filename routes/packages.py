@@ -31,7 +31,7 @@ def get_packages():
 					'private': package['private']
 				})
 		return result
-	
+
 # create package
 @packages_route.route('/', methods=['POST'])
 def create_packages():
@@ -40,3 +40,17 @@ def create_packages():
 	user = User(jwt_token=token)
 	with ckan_connect(api_key=user.api_token) as ckan:
 		return ckan.action.package_create(**payload)
+
+# get a number of packages
+@packages_route.route('/number', methods=['GET'])
+def get_number_of_packages():
+	with ckan_connect() as ckan:
+		result = ckan.action.package_list()
+		return {'ok': True, 'message': 'success', 'number': len(result)}
+
+# packages search
+@packages_route.route('/search', methods=['GET'])
+def search_packages():
+	packages_name = request.args.get('q') or "*:*"
+	with ckan_connect() as ckan:
+		return ckan.action.package_search(q=packages_name)
