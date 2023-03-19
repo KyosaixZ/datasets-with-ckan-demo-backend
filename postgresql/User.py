@@ -38,8 +38,9 @@ class User(PostgreSQL):
 		
 	def _verify_token(self, token:str = None):
 		# if success set the user id
-		if jwt.decode(token, self.secret, algorithms=["HS256"]):
-			self.id = jwt.decode(token, self.secret, algorithms=["HS256"])['id']
+		result = jwt.decode(token, self.secret, algorithms=["HS256"])
+		if result:
+			self.id = result['id']
 			# get a api_token from database
 			self._get_api_token()
 			return True

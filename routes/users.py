@@ -66,7 +66,17 @@ def get_user_details(user_name):
 		return ckan.action.user_show(id=user_name, include_datasets=True, include_num_followers=True)
 
 # get a package that user collab
-@users_route.route('/packages/<user_name>', methods=['GET'])
-def get_user_packages(user_name):
+@users_route.route('/packages', methods=['GET'])
+def get_user_packages():
+	token = request.headers.get('Authorization')
+	user = User(jwt_token=token)
 	with ckan_connect() as ckan:
-		return ckan.action.package_collaborator_list_for_user(id=user_name)
+		return ckan.action.package_collaborator_list_for_user(id=user.id)
+	
+# get a list of user's organization
+@users_route.route('/organizations', methods=['GET'])
+def get_user_organizations():
+	token = request.headers.get('Authorization')
+	user = User(jwt_token=token)
+	with ckan_connect() as ckan:
+		return ckan.action.organization_list_for_user(id=user.id)
