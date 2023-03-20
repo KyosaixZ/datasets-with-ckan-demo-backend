@@ -1,6 +1,9 @@
+import os
 from flask import Blueprint, request
 from ckan.ckan_connect import ckan_connect
 from postgresql.User import User
+from werkzeug.utils import secure_filename
+from werkzeug.datastructures import  FileStorage
 
 packages_route = Blueprint('packages_route', __name__)
 
@@ -38,6 +41,7 @@ def create_packages():
 	token = request.headers.get('Authorization')
 	payload = request.json
 	user = User(jwt_token=token)
+
 	with ckan_connect(api_key=user.api_token) as ckan:
 		return ckan.action.package_create(**payload)
 
@@ -54,3 +58,20 @@ def search_packages():
 	packages_name = request.args.get('q') or "*:*"
 	with ckan_connect() as ckan:
 		return ckan.action.package_search(q=packages_name)
+
+# add package thumbnail
+@packages_route.route('/thumbnail', methods=['POST'])
+def add_package_thumbnail():
+	file = request.files['file']
+	# os.path.join(os.path.join('staticFiles', 'uploads')
+	file.save(file.filename)
+	
+	return {'ok': True}
+
+
+
+	if 'file' not in request.files:
+		return {'ok': False, 'success': 'no file part'}
+	file = request.files['file']
+	if file.filename == '':
+		return {'ok': False, 'success': 'no selected file'}

@@ -9,24 +9,23 @@ load_dotenv()
 from .core.PostgreSQL import PostgreSQL
 
 class User(PostgreSQL):
-	id: str
-	name: str
-	api_key: str
-	api_token: str
-	create: str
-	about: str
-	password: str
-	fullname: str
-	email: str
-	sysadmin: bool
-	state: str
-	image: str
 	last_active: str
 	secret:str =  os.getenv('SECRET')
 	token_secret:str = os.getenv('TOKEN_SECRET')
 
 	def __init__(self, jwt_token: str = None):
 		super().__init__()
+		self.id: str
+		self.name: str
+		self.api_key: str
+		self.api_token: str
+		self.create: str
+		self.about: str
+		self.fullname: str
+		self.email: str
+		self.sysadmin: bool
+		self.state: str
+		self.image: str
 		if jwt_token is not None:
 			self._verify_token(jwt_token)		
 

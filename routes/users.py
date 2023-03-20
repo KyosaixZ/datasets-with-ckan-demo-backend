@@ -8,7 +8,7 @@ users_route = Blueprint('users_route', __name__)
 # get all users
 @users_route.route('/', methods=['GET'])
 def get_users():
-	# get a quthorization (api_key) from header
+	# get a authorization (api_key) from header
 	api_key = request.headers.get('Authorization')
 	
 	with ckan_connect(api_key=api_key) as ckan:
