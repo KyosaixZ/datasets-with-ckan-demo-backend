@@ -7,11 +7,21 @@ from werkzeug.datastructures import  FileStorage
 
 packages_route = Blueprint('packages_route', __name__)
 
-# get all packages
-@packages_route.route('/name', methods=['GET'])
-def get_packages_name():
-	with ckan_connect() as ckan:
-		return ckan.action.current_package_list_with_resources(all_fields=True)
+# get package deails, (giving a name to api, then return that package)
+@packages_route.route('/<package_name>', methods=['GET'])
+def get_package_datails(package_name):
+	# token = request.headers.get('Authorization')
+	# user = User(jwt_token=token)
+
+	try:
+		with ckan_connect() as ckan:
+			result = ckan.action.package_show(id=package_name)
+			if result:
+				return {'ok': True, 'message': 'success', 'result': result}
+			else:
+				return {'ok': False, 'message': 'package not found'}
+	except:
+		return {'ok': False, 'message': 'flask api error'}
 
 # get all packages, (only necessary information)
 @packages_route.route('/', methods=['GET'])
@@ -28,12 +38,13 @@ def get_packages():
 					'metadata_modified': package['metadata_modified'],
 					'name': package['name'],
 					'title': package['title'],
+					'notes': package['notes'],
 					'id': package['id'],
 					'tags': package['tags'],
 					'license_title': package['license_title'],
 					'private': package['private']
 				})
-		return result
+		return {'ok': True, 'message': 'success', 'result': result}
 
 # create package
 @packages_route.route('/', methods=['POST'])
@@ -67,8 +78,6 @@ def add_package_thumbnail():
 	file.save(file.filename)
 	
 	return {'ok': True}
-
-
 
 	if 'file' not in request.files:
 		return {'ok': False, 'success': 'no file part'}

@@ -1,5 +1,6 @@
 import os
 from sqlalchemy import create_engine, text
+from sqlalchemy.orm.exc import NoResultFound
 from dotenv import load_dotenv
 from passlib.hash import pbkdf2_sha512
 import jwt
@@ -60,22 +61,24 @@ class User(PostgreSQL):
 	def login(self, name, password):
 		with self.engine.connect() as connection:
 			query_string = "SELECT id, name, apikey, created, about, password, fullname, email, reset_key, sysadmin, activity_streams_email_notifications, state, plugin_extras, image_url, last_active FROM public.user WHERE name = '%s'" % name
-			# query the user
-			result = connection.execute(text(query_string)).one()
-			# then check a name and hashed passwors
-			# result[0] = id
-			# result[1] = name
-			# result[5] = password
+			try:
 
-			if result[1] == name and self._verify_password(password, result[5]):
-				# set user details
-				self.id = result[0]
-				self.name = result[1]
-				# generate a jwt token or something
-				token = jwt.encode({"id": self.id, "name": self.name}, self.secret, algorithm="HS256")
-				# then, return token to client
-				return token
-			else:
+				# query the user
+				result = connection.execute(text(query_string)).one()
+				# then check a name and hashed passwors
+				# result[0] = id
+				# result[1] = name
+				# result[5] = password
+
+				if result[1] == name and self._verify_password(password, result[5]):
+					# set user details
+					self.id = result[0]
+					self.name = result[1]
+					# generate a jwt token or something
+					token = jwt.encode({"id": self.id, "name": self.name}, self.secret, algorithm="HS256")
+					# then, return token to client
+					return token
+			except NoResultFound:
 				return False
 
 	def get_user_details(self, token):

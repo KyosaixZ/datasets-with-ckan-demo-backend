@@ -46,7 +46,10 @@ def login():
 	payload = request.json
 	user = User()
 	token = user.login(payload['name'], payload['password'])
-	return {'ok': True,'message': 'success', 'token': token}
+	if token:
+		return {'ok': True,'message': 'success', 'token': token}
+	else:
+		return {'ok': False,'message': 'failed to login'}
 
 # get user details
 @users_route.route('/me', methods=['GET'])

@@ -28,9 +28,10 @@ def get_organizations():
 	with ckan_connect() as ckan:
 		result = ckan.action.organization_list(all_fields=True, order_by=order)
 		if len(result) == 0:
-			return jsonify(ckan.action.organization_list(all_fields=True))
+			all_packages = ckan.action.organization_list(all_fields=True)
+			return {'ok': True, 'message': 'success', 'result': all_packages}
 		else:
-			return jsonify(result)
+			return {'ok': True, 'message': 'success', 'result': result}
 
 # get number of organizations
 @organizations_route.route('/number', methods=['GET'])
