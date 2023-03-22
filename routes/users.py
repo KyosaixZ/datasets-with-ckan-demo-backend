@@ -51,22 +51,12 @@ def login():
 	else:
 		return {'ok': False,'message': 'failed to login'}
 
-# get user details
-@users_route.route('/me', methods=['GET'])
-def get_personal_details():
-	token = request.headers.get('Authorization')
-	user = User()
-	details = user.get_user_details(token)
-	if details is not None:
-		return {'ok': True, 'message': 'success', 'details': details}
-	else:
-		return 'error'
-
 # get a user details (using a ckanapi)
 @users_route.route('/<user_name>', methods=['GET'])
 def get_user_details(user_name):
 	with ckan_connect() as ckan:
-		return ckan.action.user_show(id=user_name, include_datasets=True, include_num_followers=True)
+		result = ckan.action.user_show(id=user_name, include_datasets=True, include_num_followers=True)
+		return {'ok': True, 'message': 'success', 'result': result}
 
 # get a package that user collab
 @users_route.route('/packages', methods=['GET'])
@@ -83,3 +73,16 @@ def get_user_organizations():
 	user = User(jwt_token=token)
 	with ckan_connect() as ckan:
 		return ckan.action.organization_list_for_user(id=user.id)
+
+'''
+# get user details
+@users_route.route('/me', methods=['GET'])
+def get_personal_details():
+	token = request.headers.get('Authorization')
+	user = User()
+	details = user.get_user_details(token)
+	if details is not None:
+		return {'ok': True, 'message': 'success', 'result': details}
+	else:
+		return 'error'
+'''
