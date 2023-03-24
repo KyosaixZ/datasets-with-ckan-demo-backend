@@ -13,9 +13,17 @@ from dotenv import load_dotenv
 load_dotenv()
 API_ENDPOINT = os.getenv('API_ENDPOINT')
 
+# Cors
+config = {
+  'ORIGINS': [
+    'http://localhost:3000',  # React
+    'http://127.0.0.1:3000',  # React
+  ]
+}
+
 # create a flask app
 app = Flask(__name__)
-CORS(app, support_credentials=True)
+CORS(app, resources={r"/*": {"origins": "*"}}, expose_headers='Authorization')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 app.config['UPLOAD_FOLDER'] = "http://127.0.0.1:5000/uploads"
 
@@ -28,4 +36,4 @@ app.register_blueprint(topics_route, url_prefix=f'{API_ENDPOINT}/topics')
 app.register_blueprint(groups_route, url_prefix=f'{API_ENDPOINT}/groups')
 
 if __name__ == '__main__':
-	app.run(host='127.0.0.1', port=5001, debug=True)
+	app.run(host='127.0.0.1', port=5001, debug=True,)

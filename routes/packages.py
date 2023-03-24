@@ -1,27 +1,10 @@
-import os
+import sys, os
 from flask import Blueprint, request
+from flask_cors import CORS, cross_origin
 from ckan.ckan_connect import ckan_connect
 from postgresql.User import User
-from werkzeug.utils import secure_filename
-from werkzeug.datastructures import  FileStorage
 
 packages_route = Blueprint('packages_route', __name__)
-
-# get package deails, (giving a name to api, then return that package)
-@packages_route.route('/<package_name>', methods=['GET'])
-def get_package_datails(package_name):
-	# token = request.headers.get('Authorization')
-	# user = User(jwt_token=token)
-
-	try:
-		with ckan_connect() as ckan:
-			result = ckan.action.package_show(id=package_name)
-			if result:
-				return {'ok': True, 'message': 'success', 'result': result}
-			else:
-				return {'ok': False, 'message': 'package not found'}
-	except:
-		return {'ok': False, 'message': 'flask api error'}
 
 # get all packages, (only necessary information)
 @packages_route.route('/', methods=['GET'])
@@ -48,13 +31,31 @@ def get_packages():
 
 # create package
 @packages_route.route('/', methods=['POST'])
+@cross_origin()
 def create_packages():
 	token = request.headers.get('Authorization')
 	payload = request.json
 	user = User(jwt_token=token)
 
 	with ckan_connect(api_key=user.api_token) as ckan:
-		return ckan.action.package_create(**payload)
+		result = ckan.action.package_create(**payload)
+		return {'ok': True, 'message': 'success', 'result': result}
+
+# get package deails, (giving a name to api, then return that package)
+@packages_route.route('/<package_name>', methods=['GET'])
+def get_package_datails(package_name):
+	# token = request.headers.get('Authorization')
+	# user = User(jwt_token=token)
+
+	try:
+		with ckan_connect() as ckan:
+			result = ckan.action.package_show(id=package_name)
+			if result:
+				return {'ok': True, 'message': 'success', 'result': result}
+			else:
+				return {'ok': False, 'message': 'package not found'}
+	except:
+		return {'ok': False, 'message': 'flask api error'}
 
 # get a number of packages
 @packages_route.route('/number', methods=['GET'])
@@ -68,7 +69,11 @@ def get_number_of_packages():
 def search_packages():
 	packages_name = request.args.get('q') or "*:*"
 	with ckan_connect() as ckan:
-		return ckan.action.package_search(q=packages_name)
+		result = ckan.action.package_search(q=packages_name)
+		if(result['count'] > 0):
+			return {'ok': True, 'message': 'success', 'result': result['results']}
+		else:
+			return {'ok': False, 'message': 'not found'}
 
 # add package thumbnail
 @packages_route.route('/thumbnail', methods=['POST'])
@@ -84,3 +89,12 @@ def add_package_thumbnail():
 	file = request.files['file']
 	if file.filename == '':
 		return {'ok': False, 'success': 'no selected file'}
+
+# create follow datasets (bookmarked)
+@packages_route.route('/bookmarked', methods=['POST'])
+def create_packages_bookmarked(package_name):
+	token = request.headers.get('Authorization')
+	user = User(jwt_token=token)
+	with ckan_connect(api_key=user.api_token) as ckan:
+		result = ckan.action.follow_dataset(id=package_name)
+		return {'ok': True,'message': 'success', 'result': result}

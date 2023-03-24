@@ -65,6 +65,15 @@ def get_user_packages():
 	user = User(jwt_token=token)
 	with ckan_connect() as ckan:
 		return ckan.action.package_collaborator_list_for_user(id=user.id)
+
+# get a datasets (aka datasets) that user bookmarked
+@users_route.route('/bookmarked', methods=['GET'])
+def get_users_bookmarked():
+	token = request.headers.get('Authorization')
+	user = User(jwt_token=token)
+	with ckan_connect() as ckan:
+		result = ckan.action.dataset_followee_list(id=user.id)
+		return result
 	
 # get a list of user's organization
 @users_route.route('/organizations', methods=['GET'])
@@ -73,16 +82,3 @@ def get_user_organizations():
 	user = User(jwt_token=token)
 	with ckan_connect() as ckan:
 		return ckan.action.organization_list_for_user(id=user.id)
-
-'''
-# get user details
-@users_route.route('/me', methods=['GET'])
-def get_personal_details():
-	token = request.headers.get('Authorization')
-	user = User()
-	details = user.get_user_details(token)
-	if details is not None:
-		return {'ok': True, 'message': 'success', 'result': details}
-	else:
-		return 'error'
-'''

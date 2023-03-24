@@ -11,6 +11,14 @@ def get_all_groups():
 		result = ckan.action.group_list(all_fields=True)
 		return {'ok': True, 'message': 'success', 'result': result}
 
+# get all gropus, (only name)
+@groups_route.route('name', methods=['GET'])
+def get_all_groups_name():
+	with ckan_connect() as ckan:
+		result = ckan.action.group_list()
+		return {'ok': True, 'message': 'success', 'result': result}
+
+
 # get number of groups
 @groups_route.route('/number', methods=['GET'])
 def get_number_of_groups():

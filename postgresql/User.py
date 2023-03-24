@@ -54,8 +54,10 @@ class User(PostgreSQL):
 				result = connection.execute(text(query_string)).one()
 				token = jwt.encode({"jti": result[0], "iat": 1679160636}, self.token_secret, algorithm="HS256")
 				self.api_token = token
+				print('lol', self.api_token)
 				return token				
 			except:
+				print('user don\'t have api token')
 				return False
 
 	def login(self, name, password):
