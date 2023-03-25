@@ -54,7 +54,9 @@ def login():
 # get a user details (using a ckanapi)
 @users_route.route('/<user_name>', methods=['GET'])
 def get_user_details(user_name):
-	with ckan_connect() as ckan:
+	token = request.headers.get('Authorization')
+	user = User(jwt_token=token)
+	with ckan_connect(api_key=user.api_token) as ckan:
 		result = ckan.action.user_show(id=user_name, include_datasets=True, include_num_followers=True)
 		return {'ok': True, 'message': 'success', 'result': result}
 

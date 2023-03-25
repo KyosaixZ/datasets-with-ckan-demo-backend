@@ -1,6 +1,6 @@
 import sys, os
 from flask import Blueprint, request
-from flask_cors import CORS, cross_origin
+from flask_cors import cross_origin
 from ckan.ckan_connect import ckan_connect
 from postgresql.User import User
 
@@ -41,12 +41,34 @@ def create_packages():
 		result = ckan.action.package_create(**payload)
 		return {'ok': True, 'message': 'success', 'result': result}
 
+# update package
+@packages_route.route('/<package_name>', methods=['PUT'])
+@cross_origin()
+def update_package(package_name):
+	token = request.headers.get('Authorization')
+	user = User(jwt_token=token)
+	payload = request.json
+
+	with ckan_connect(api_key=user.api_token) as ckan:
+		result = ckan.action.package_update(id=package_name, **payload)
+		return {'ok': True, 'message': 'success', 'result': result}
+
+@packages_route.route('/<package_name>', methods=['DELETE'])
+@cross_origin()
+def delete_package(package_name):
+	token = request.headers.get('Authorization')
+	user = User(jwt_token=token)
+	payload = request.json
+
+	with ckan_connect(api_key=user.api_token) as ckan:
+		result = ckan.action.package_delete(id=package_name)
+		return {'ok': True, 'message': 'success', 'result': result}
+
 # get package deails, (giving a name to api, then return that package)
 @packages_route.route('/<package_name>', methods=['GET'])
 def get_package_datails(package_name):
 	# token = request.headers.get('Authorization')
 	# user = User(jwt_token=token)
-
 	try:
 		with ckan_connect() as ckan:
 			result = ckan.action.package_show(id=package_name)
@@ -67,9 +89,10 @@ def get_number_of_packages():
 # packages search
 @packages_route.route('/search', methods=['GET'])
 def search_packages():
-	packages_name = request.args.get('q') or "*:*"
+	packages_name = request.args.get('q')
 	with ckan_connect() as ckan:
-		result = ckan.action.package_search(q=packages_name)
+		# if request come with query string
+		result = ckan.action.package_search(q=packages_name, include_private=False, rows=1000)
 		if(result['count'] > 0):
 			return {'ok': True, 'message': 'success', 'result': result['results']}
 		else:
@@ -91,10 +114,33 @@ def add_package_thumbnail():
 		return {'ok': False, 'success': 'no selected file'}
 
 # create follow datasets (bookmarked)
-@packages_route.route('/bookmarked', methods=['POST'])
+@packages_route.route('/bookmarked/<package_name>', methods=['POST'])
+@cross_origin()
 def create_packages_bookmarked(package_name):
 	token = request.headers.get('Authorization')
+	if token is None:
+		return {'ok': False, 'message': 'token not provide'}
 	user = User(jwt_token=token)
 	with ckan_connect(api_key=user.api_token) as ckan:
 		result = ckan.action.follow_dataset(id=package_name)
 		return {'ok': True,'message': 'success', 'result': result}
+
+@packages_route.route('/bookmarked/<package_name>', methods=['GET'])
+def check_package_bookmarked(package_name):
+	token = request.headers.get('Authorization')
+	if token is None:
+		return {'ok': False, 'message': 'token not provide'}
+	user = User(jwt_token=token)
+	with ckan_connect(api_key=user.api_token) as ckan:
+		result = ckan.action.am_following_dataset(id=package_name)
+		return {'ok': True,'message': 'success', 'result': result, 'bookmarked': result}
+	
+@packages_route.route('/bookmarked/<package_name>/', methods=['DELETE'])
+def delete_package_bookmarked(package_name):
+	token = request.headers.get('Authorization')
+	if token is None:
+		return {'ok': False, 'message': 'token not provide'}
+	user = User(jwt_token=token)
+	with ckan_connect(api_key=user.api_token) as ckan:
+		ckan.action.unfollow_dataset(id=package_name)
+		return {'ok': True,'message': 'success'}
