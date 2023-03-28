@@ -5,7 +5,7 @@ from routes.users import users_route
 from routes.packages import packages_route
 from routes.tags import tags_route
 from routes.organizations import organizations_route
-from routes.topics import topics_route
+from routes.discussion import discussion_route
 from routes.groups import groups_route
 from dotenv import load_dotenv
 
@@ -32,7 +32,7 @@ app.register_blueprint(users_route, url_prefix=f'{API_ENDPOINT}/users')
 app.register_blueprint(packages_route, url_prefix=f'{API_ENDPOINT}/packages')
 app.register_blueprint(tags_route, url_prefix=f'{API_ENDPOINT}/tags')
 app.register_blueprint(organizations_route, url_prefix=f'{API_ENDPOINT}/organizations')
-app.register_blueprint(topics_route, url_prefix=f'{API_ENDPOINT}/topics')
+app.register_blueprint(discussion_route, url_prefix=f'{API_ENDPOINT}/discussion')
 app.register_blueprint(groups_route, url_prefix=f'{API_ENDPOINT}/groups')
 
 if __name__ == '__main__':

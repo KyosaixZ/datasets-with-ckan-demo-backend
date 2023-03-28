@@ -118,6 +118,10 @@ def add_package_thumbnail():
 @cross_origin()
 def create_packages_bookmarked(package_name):
 	token = request.headers.get('Authorization')
+	print('\n')
+	print(f'token ==> {token}')
+	print(f'package_name ==> {package_name}')
+	print('\n')
 	if token is None:
 		return {'ok': False, 'message': 'token not provide'}
 	user = User(jwt_token=token)
