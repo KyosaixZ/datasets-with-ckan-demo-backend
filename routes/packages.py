@@ -3,6 +3,7 @@ from flask import Blueprint, request
 from flask_cors import cross_origin
 from ckan.ckan_connect import ckan_connect
 from postgresql.User import User
+import tempfile
 
 packages_route = Blueprint('packages_route', __name__)
 
@@ -53,16 +54,39 @@ def update_package(package_name):
 		result = ckan.action.package_update(id=package_name, **payload)
 		return {'ok': True, 'message': 'success', 'result': result}
 
+# delete package
 @packages_route.route('/<package_name>', methods=['DELETE'])
 @cross_origin()
 def delete_package(package_name):
 	token = request.headers.get('Authorization')
 	user = User(jwt_token=token)
-	payload = request.json
 
 	with ckan_connect(api_key=user.api_token) as ckan:
 		result = ckan.action.package_delete(id=package_name)
 		return {'ok': True, 'message': 'success', 'result': result}
+
+# create new resource
+@packages_route.route('/resources', methods=['POST'])
+@cross_origin()
+def create_resource():
+	token = request.headers.get('Authorization')
+	user = User(jwt_token=token)
+
+	package_id = request.form['package_id']
+	url = request.form['url']
+	description = request.form['description']
+	upload = request.files['upload']
+
+	payload = {
+		'package_id': package_id,
+		'url': url,
+		'description': description,
+		'format': upload.content_type,
+		'name': upload.filename,
+	}
+
+	with ckan_connect(api_key=user.api_token) as ckan:
+		return ckan.action.resource_create(id=package_id, upload=open('shark-tank-us-dataset.csv', 'rb'))
 
 # get package deails, (giving a name to api, then return that package)
 @packages_route.route('/<package_name>', methods=['GET'])

@@ -40,8 +40,10 @@ def view_topics(topic_id):
 
 # create comment, comment into the topic
 @discussion_route.route('/comments/<topic_id>', methods=['POST'])
+@cross_origin()
 def create_comment(topic_id):
     jwt_token = request.headers.get('Authorization')
-    topic = Discussion(jwt_token, None)
+    print(f'token => {jwt_token}')
     payload = request.json
+    topic = Discussion(jwt_token=jwt_token)
     return topic.create_comment(topic_id, payload)

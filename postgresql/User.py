@@ -75,8 +75,9 @@ class User(PostgreSQL):
 					# set user details
 					self.id = result[0]
 					self.name = result[1]
+					self.fullname = result[6]
 					# generate a jwt token or something
-					token = jwt.encode({"id": self.id, "name": self.name}, self.secret, algorithm="HS256")
+					token = jwt.encode({"id": self.id, "name": self.name, "fullname": self.fullname}, self.secret, algorithm="HS256")
 					# then, return token to client
 					return token
 			except NoResultFound:
