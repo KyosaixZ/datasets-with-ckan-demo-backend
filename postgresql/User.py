@@ -47,6 +47,10 @@ class User(PostgreSQL):
 		else:
 			return False
 
+
+	def _check_authorize(self, token):
+		self._get_api_token(token)
+
 	def _get_api_token(self):
 		with self.engine.connect() as connection:
 			query_string = "SELECT id, name FROM public.api_token WHERE user_id = '%s' AND name='%s'" % (self.id, 'ckan_private_api_token')

@@ -3,7 +3,9 @@ from flask import Blueprint, request
 from flask_cors import cross_origin
 from ckan.ckan_connect import ckan_connect
 from postgresql.User import User
+from postgresql.Thumbnail import Thumbnail
 import tempfile
+import base64
 
 packages_route = Blueprint('packages_route', __name__)
 
@@ -114,9 +116,11 @@ def get_number_of_packages():
 @packages_route.route('/search', methods=['GET'])
 def search_packages():
 	packages_name = request.args.get('q')
+	tags_name = request.args.get('tags')
+
 	with ckan_connect() as ckan:
 		# if request come with query string
-		result = ckan.action.package_search(q=packages_name, include_private=False, rows=1000)
+		result = ckan.action.package_search(q=packages_name, fq=tags_name, include_private=False, rows=1000)
 		if(result['count'] > 0):
 			return {'ok': True, 'message': 'success', 'result': result['results']}
 		else:
@@ -172,3 +176,27 @@ def delete_package_bookmarked(package_name):
 	with ckan_connect(api_key=user.api_token) as ckan:
 		ckan.action.unfollow_dataset(id=package_name)
 		return {'ok': True,'message': 'success'}
+
+# datasets (packages) thumbnail
+@packages_route.route('/<package_id>/thumbnail', methods=['POST'])
+def create_packages_thumbnail(package_id):
+	token = request.headers.get('Authorization')
+	image_data = request.files.get('thumbnail_image').read()
+
+	new_thumbnail = Thumbnail(jwt_token=token)
+	return new_thumbnail.create_thumbnail(package_id, image_data)
+
+# get datasets (package) thumbnail -> return as base64
+@packages_route.route('/<package_id>/thumbnail', methods=['GET'])
+def get_package_thumbnail(package_id):
+	thumbnail = Thumbnail()
+	return thumbnail.get_thumbnail(package_id)
+
+# update a thumbnail
+@packages_route.route('/<package_id>/thumbnail', methods=['PUT'])
+def update_package_thumbnail(package_id):
+	token = request.headers.get('Authorization')
+	image_data = request.files.get('thumbnail_image').read()
+
+	new_thumbnail = Thumbnail(jwt_token=token)
+	return new_thumbnail.update_thumbnail(package_id, image_data)
